@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Cartera">
+<meta name="theme-color" content="#0C447C">
+<title>Mi Cartera</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a2940;min-height:100vh;padding-bottom:80px}
+.header{background:#0C447C;color:#fff;padding:52px 20px 0;position:sticky;top:0;z-index:100}
+.header h1{font-size:18px;font-weight:500}
+.header .subtitle{font-size:12px;opacity:.7;margin-top:2px;min-height:16px}
+.nav{display:flex;margin-top:12px}
+.nav button{flex:1;background:none;border:none;color:rgba(255,255,255,.55);font-size:13px;padding:8px 2px;cursor:pointer;border-bottom:2px solid transparent}
+.nav button.active{color:#fff;border-bottom-color:#5BA3E0}
+.content{padding:16px}
+.tab{display:none}.tab.active{display:block}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.total-banner{background:#0C447C;color:#fff;border-radius:12px;padding:18px;margin-bottom:12px}
+.total-banner .tl{font-size:12px;opacity:.75;margin-bottom:4px}
+.total-banner .tv{font-size:30px;font-weight:500}
+.total-banner .tc{font-size:13px;margin-top:6px;opacity:.85}
+.metric-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.metric{background:#EBF3FB;border-radius:10px;padding:14px}
+.metric .ml{font-size:11px;color:#185FA5;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.metric .mv{font-size:20px;font-weight:500;color:#0C447C}
+.pos-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.pos-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.pos-name{font-size:14px;font-weight:500;max-width:65%;line-height:1.3}
+.pos-meta{font-size:11px;color:#999;margin-top:2px}
+.pos-right{text-align:right}
+.pos-val{font-size:16px;font-weight:500;color:#0C447C}
+.pos-chg{font-size:12px;margin-top:2px}
+.up{color:#27A06A}.down{color:#D03232}
+.pos-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:12px;border-top:1px solid #f0f0f0;padding-top:8px}
+.pos-grid div .gl{font-size:11px;color:#bbb;margin-bottom:2px}
+.section-title{font-size:12px;font-weight:500;color:#185FA5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;color:#444;margin-bottom:5px;font-weight:500}
+.form-group input{width:100%;padding:12px;border:1px solid #dde3ec;border-radius:8px;font-size:15px;color:#1a2940;outline:none;background:#fafcff}
+.form-group input:focus{border-color:#378ADD}
+.form-group .hint{font-size:11px;color:#aaa;margin-top:4px}
+.btn-primary{background:#0C447C;color:#fff;border:none;border-radius:10px;padding:14px;width:100%;font-size:15px;cursor:pointer;font-weight:500}
+.btn-primary:disabled{opacity:.5}
+.btn-danger{background:none;color:#D03232;border:1px solid #D03232;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
+.badge{display:inline-block;font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500}
+.badge.up{background:#E6F7EF;color:#27A06A}
+.badge.down{background:#FDEAEA;color:#D03232}
+.empty-state{text-align:center;padding:40px 20px;color:#888}
+.empty-icon{font-size:36px;margin-bottom:12px}
+.chart-wrap{position:relative;width:100%;height:220px;margin-top:8px}
+.mini-wrap{position:relative;width:100%;height:90px;margin-top:10px}
+.period-tabs{display:flex;gap:6px;margin-bottom:12px}
+.period-tabs button{flex:1;background:#EBF3FB;border:none;border-radius:6px;padding:6px;font-size:12px;color:#185FA5;cursor:pointer}
+.period-tabs button.active{background:#0C447C;color:#fff}
+.distrib-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5}
+.distrib-row:last-child{border-bottom:none}
+.distrib-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.distrib-bar-bg{height:4px;background:#EBF3FB;border-radius:2px;margin-top:3px}
+.distrib-bar-fill{height:4px;border-radius:2px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #dde3ec;border-top-color:#0C447C;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status-msg{font-size:13px;color:#185FA5;margin-top:10px;min-height:20px;text-align:center}
+.error-msg{color:#D03232}
+.source-tag{font-size:10px;color:#aaa;text-align:right;margin-top:6px}
+.config-banner{background:#FFF8E1;border:1px solid #FFD54F;border-radius:10px;padding:14px;margin-bottom:12px;font-size:13px;color:#7B5800;line-height:1.6}
+.config-banner b{color:#5D4000}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Mi Cartera</h1>
+  <div class="subtitle" id="lastUpdate">—</div>
+  <div class="nav">
+    <button class="active" onclick="showTab('resumen')">Resumen</button>
+    <button onclick="showTab('posiciones')">Posiciones</button>
+    <button onclick="showTab('evolucion')">Evolución</button>
+    <button onclick="showTab('anadir')">+ Añadir</button>
+    <button onclick="showTab('config')">⚙</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <div id="tab-resumen" class="tab active"><div id="resumen-content"></div></div>
+  <div id="tab-posiciones" class="tab"><div id="posiciones-content"></div></div>
+
+  <div id="tab-evolucion" class="tab">
+    <div class="card">
+      <div class="section-title">Rentabilidad comparada</div>
+      <div class="period-tabs">
+        <button class="active" onclick="setPeriod(90,this)">3M</button>
+        <button onclick="setPeriod(180,this)">6M</button>
+        <button onclick="setPeriod(365,this)">1A</button>
+        <button onclick="setPeriod(1095,this)">3A</button>
+      </div>
+      <div class="chart-wrap"><canvas id="chartEvol"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Distribución</div>
+      <div id="distrib-content"></div>
+    </div>
+  </div>
+
+  <div id="tab-anadir" class="tab">
+    <div id="no-api-warning" style="display:none" class="config-banner">
+      Antes de añadir fondos configura la URL de tu servidor en la pestaña <b>⚙</b>.
+    </div>
+    <div class="card">
+      <div class="section-title">Añadir fondo por ISIN</div>
+      <div class="form-group">
+        <label>Código ISIN</label>
+        <input id="f-isin" type="text" placeholder="ej. ES0108232002" maxlength="12"
+          style="text-transform:uppercase;letter-spacing:1px"
+          oninput="this.value=this.value.toUpperCase()">
+        <div class="hint">12 caracteres — el servidor buscará el NAV automáticamente</div>
+      </div>
+      <div class="form-group">
+        <label>Nombre del fondo <span style="font-weight:400;color:#aaa;font-size:11px">(opcional, se obtiene automáticamente)</span></label>
+        <input id="f-name" type="text" placeholder="ej. Allianz Cartera Dinámica">
+      </div>
+      <div class="form-group">
+        <label>Participaciones (unidades)</label>
+        <input id="f-units" type="number" placeholder="ej. 150.500" step="0.001" min="0">
+      </div>
+      <div class="form-group">
+        <label>Precio medio de compra (€)</label>
+        <input id="f-cost" type="number" placeholder="ej. 17.50" step="0.0001" min="0">
+      </div>
+      <button class="btn-primary" id="btnAdd" onclick="addFund()">Verificar y añadir</button>
+      <div class="status-msg" id="add-status"></div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:8px">Fondos en cartera</div>
+      <div id="manage-list"></div>
+    </div>
+  </div>
+
+  <div id="tab-config" class="tab">
+    <div class="card">
+      <div class="section-title">Configuración del servidor</div>
+      <div class="form-group">
+        <label>URL de tu servidor Vercel</label>
+        <input id="cfg-url" type="url" placeholder="https://cartera-fondos-api.vercel.app"
+          oninput="saveConfig()">
+        <div class="hint">La URL que obtienes al desplegar en Vercel. Sin barra final.</div>
+      </div>
+      <div id="cfg-status" class="status-msg"></div>
+      <button class="btn-primary" onclick="testApi()">Probar conexión</button>
+    </div>
+    <div class="card" style="font-size:13px;line-height:1.7;color:#444">
+      <div class="section-title">Instrucciones de despliegue</div>
+      <p><b>1.</b> Crea cuenta gratuita en <b>github.com</b></p>
+      <p style="margin-top:8px"><b>2.</b> Crea un repositorio llamado <b>cartera-fondos-api</b> (público)</p>
+      <p style="margin-top:8px"><b>3.</b> Sube los ficheros descargados manteniendo la carpeta <b>api/</b></p>
+      <p style="margin-top:8px"><b>4.</b> Ve a <b>vercel.com</b>, entra con tu cuenta GitHub e importa el repositorio</p>
+      <p style="margin-top:8px"><b>5.</b> Pulsa Deploy — en 30 segundos tendrás tu URL</p>
+      <p style="margin-top:8px"><b>6.</b> Pégala arriba y pulsa "Probar conexión"</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── Configuración ────────────────────────────────────────────────────────────
+let API_BASE = localStorage.getItem('api_base') || '';
+function saveConfig() {
+  API_BASE = document.getElementById('cfg-url').value.trim().replace(/\/$/, '');
+  localStorage.setItem('api_base', API_BASE);
+}
+function loadConfig() {
+  const saved = localStorage.getItem('api_base') || '';
+  document.getElementById('cfg-url').value = saved;
+  API_BASE = saved;
+}
+
+async function testApi() {
+  const url = document.getElementById('cfg-url').value.trim().replace(/\/$/, '');
+  if (!url) { ss('cfg-status','<span class="error-msg">Introduce la URL primero.</span>'); return; }
+  ss('cfg-status', spin('Probando conexión...'));
+  try {
+    const r = await fetch(`${url}/api/fondo?isin=ES0108232002&days=30`, { signal: AbortSignal.timeout(12000) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (d.nav) {
+      ss('cfg-status', `<span style="color:#27A06A">✓ Conexión correcta. NAV de prueba: <b>${d.nav} €</b></span>`);
+      API_BASE = url;
+      localStorage.setItem('api_base', API_BASE);
+    } else {
+      ss('cfg-status', `<span class="error-msg">El servidor respondió pero sin datos: ${JSON.stringify(d)}</span>`);
+    }
+  } catch(e) {
+    ss('cfg-status', `<span class="error-msg">Error: ${e.message}. Revisa la URL.</span>`);
+  }
+}
+
+// ─── Estado ───────────────────────────────────────────────────────────────────
+let portfolio = JSON.parse(localStorage.getItem('cartera_v4') || '[]');
+let cache     = {};
+let days      = 180;
+let evoChart  = null;
+
+function save() { localStorage.setItem('cartera_v4', JSON.stringify(portfolio)); }
+function fmt(n,d=2){ return Number(n).toLocaleString('es-ES',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function fmtE(n){ return fmt(n,2)+' €'; }
+function fmtP(n){ return (n>=0?'+':'')+fmt(n,2)+'%'; }
+function ss(id,h){ const el=document.getElementById(id); if(el) el.innerHTML=h; }
+function spin(m){ return `<span class="spinner"></span>${m}`; }
+
+// ─── Llamada al servidor propio ───────────────────────────────────────────────
+async function apiFetch(isin, d) {
+  if (!API_BASE) return null;
+  try {
+    const r = await fetch(`${API_BASE}/api/fondo?isin=${isin}&days=${d}`, {
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+// ─── Añadir fondo ─────────────────────────────────────────────────────────────
+async function addFund() {
+  if (!API_BASE) {
+    ss('add-status','<span class="error-msg">Primero configura la URL del servidor en ⚙.</span>');
+    return;
+  }
+  const isin  = document.getElementById('f-isin').value.trim().toUpperCase();
+  const name  = document.getElementById('f-name').value.trim();
+  const units = parseFloat(document.getElementById('f-units').value);
+  const cost  = parseFloat(document.getElementById('f-cost').value);
+
+  if (isin.length !== 12) { ss('add-status','<span class="error-msg">ISIN incorrecto (12 caracteres).</span>'); return; }
+  if (isNaN(units)||units<=0){ ss('add-status','<span class="error-msg">Introduce las participaciones.</span>'); return; }
+  if (isNaN(cost)||cost<=0)  { ss('add-status','<span class="error-msg">Introduce el precio medio.</span>'); return; }
+  if (portfolio.find(f=>f.isin===isin)){ ss('add-status','<span class="error-msg">Este ISIN ya está en cartera.</span>'); return; }
+
+  const btn = document.getElementById('btnAdd');
+  btn.disabled = true; btn.innerHTML = spin('Consultando servidor...');
+  ss('add-status', spin('Buscando datos del fondo...'));
+
+  const data = await apiFetch(isin, 180);
+
+  if (!data?.series?.length) {
+    ss('add-status','<span class="error-msg">No se encontraron datos para este ISIN.<br>Comprueba que el servidor está activo y el ISIN es correcto.</span>');
+    btn.disabled=false; btn.textContent='Verificar y añadir'; return;
+  }
+
+  const last = data.series[data.series.length-1];
+  cache[isin] = data;
+
+  portfolio.push({
+    name: name || data.name || isin,
+    isin, units, costPrice: cost
+  });
+  save();
+
+  ['f-isin','f-name','f-units','f-cost'].forEach(id=>document.getElementById(id).value='');
+  ss('add-status', `<span style="color:#27A06A">✓ Añadido. NAV: <b>${fmtE(last.c)}</b> (${data.navDate})</span>`);
+  btn.innerHTML='✓ Añadido';
+  setTimeout(()=>{ btn.disabled=false; btn.textContent='Verificar y añadir'; }, 2000);
+  renderAll();
+  showTab('resumen');
+}
+
+// ─── Refresco ─────────────────────────────────────────────────────────────────
+async function refreshAll() {
+  if (!portfolio.length) { renderAll(); ss('lastUpdate','—'); return; }
+  if (!API_BASE) { renderAll(); ss('lastUpdate','⚠ Configura el servidor en ⚙'); return; }
+  ss('lastUpdate', spin('Actualizando...'));
+  for (const f of portfolio) {
+    const d = await apiFetch(f.isin, days);
+    if (d?.series?.length) cache[f.isin] = d;
+  }
+  const now = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  ss('lastUpdate', `Actualizado ${now}`);
+  renderAll();
+}
+
+function renderAll(){ rResumen(); rPosiciones(); rEvolucion(); rManage(); }
+
+function gp(f) {
+  const c   = cache[f.isin];
+  const cur = c?.nav ?? f.costPrice;
+  const s   = c?.series ?? [];
+  const val = cur * f.units;
+  const cos = f.costPrice * f.units;
+  const pl  = val - cos;
+  const plp = cos>0?(pl/cos)*100:0;
+  const day = s.length>1?((s[s.length-1].c-s[s.length-2].c)/s[s.length-2].c)*100:0;
+  return { cur, val, cos, pl, plp, day, s, navDate: c?.navDate||'—' };
+}
+
+function rResumen(){
+  if (!portfolio.length){
+    ss('resumen-content','<div class="empty-state"><div class="empty-icon">📊</div><p>Sin fondos aún.<br>Ve a <b>+ Añadir</b>.</p></div>');
+    return;
+  }
+  if (!API_BASE){
+    ss('resumen-content','<div class="config-banner">Configura la URL de tu servidor Vercel en la pestaña <b>⚙</b> para ver los datos actualizados.</div>');
+  }
+  let tv=0,tc=0;
+  portfolio.forEach(f=>{const d=gp(f);tv+=d.val;tc+=d.cos;});
+  const pl=tv-tc,plp=tc>0?(pl/tc)*100:0;
+  ss('resumen-content',`
+    <div class="total-banner">
+      <div class="tl">Valor total de cartera</div>
+      <div class="tv">${fmtE(tv)}</div>
+      <div class="tc">${pl>=0?'▲':'▼'} ${fmtE(Math.abs(pl))} (${fmtP(plp)})</div>
+    </div>
+    <div class="metric-row">
+      <div class="metric"><div class="ml">Invertido</div><div class="mv" style="font-size:17px">${fmtE(tc)}</div></div>
+      <div class="metric"><div class="ml">Resultado</div>
+        <div class="mv" style="font-size:17px;color:${pl>=0?'#27A06A':'#D03232'}">${fmtE(pl)}</div>
+      </div>
+    </div>
+    <div class="section-title">Posiciones</div>
+    ${portfolio.map(f=>{const d=gp(f);return`
+      <div class="pos-card">
+        <div class="pos-head">
+          <div><div class="pos-name">${f.name}</div><div class="pos-meta">${f.isin}</div></div>
+          <div class="pos-right">
+            <div class="pos-val">${fmtE(d.val)}</div>
+            <div class="pos-chg ${d.plp>=0?'up':'down'}">${fmtP(d.plp)}</div>
+          </div>
+        </div>
+        <div class="pos-grid">
+          <div><div class="gl">Partic.</div>${fmt(f.units,3)}</div>
+          <div><div class="gl">NAV</div>${fmt(d.cur,4)}</div>
+          <div><div class="gl">P. medio</div>${fmt(f.costPrice,4)}</div>
+        </div>
+        <div class="source-tag">NAV ${d.navDate}</div>
+      </div>`}).join('')}`);
+}
+
+function rPosiciones(){
+  if (!portfolio.length){ss('posiciones-content','<div class="empty-state"><div class="empty-icon">📋</div><p>Sin posiciones.</p></div>');return;}
+  ss('posiciones-content',portfolio.map(f=>{
+    const d=gp(f);
+    const tr=d.s.length>1?((d.s[d.s.length-1].c/d.s[0].c)-1)*100:0;
+    return`<div class="card">
+      <div class="pos-head" style="margin-bottom:10px">
+        <div><div class="pos-name">${f.name}</div><div class="pos-meta">${f.isin}</div></div>
+        <div class="pos-right"><div class="pos-val">${fmt(d.cur,4)} €</div>
+          <span class="badge ${d.day>=0?'up':'down'}">${fmtP(d.day)} últ.</span>
+        </div>
+      </div>
+      <div class="pos-grid" style="grid-template-columns:repeat(3,1fr);gap:8px">
+        <div><div class="gl">Valor</div><b>${fmtE(d.val)}</b></div>
+        <div><div class="gl">Invertido</div><b>${fmtE(d.cos)}</b></div>
+        <div><div class="gl">Resultado</div><b style="color:${d.pl>=0?'#27A06A':'#D03232'}">${fmtE(d.pl)}</b></div>
+        <div><div class="gl">Rentab.</div><b style="color:${d.plp>=0?'#27A06A':'#D03232'}">${fmtP(d.plp)}</b></div>
+        <div><div class="gl">Período</div><b style="color:${tr>=0?'#27A06A':'#D03232'}">${fmtP(tr)}</b></div>
+        <div><div class="gl">Partic.</div><b>${fmt(f.units,3)}</b></div>
+      </div>
+      ${d.s.length>1?`<div class="mini-wrap"><canvas id="m_${f.isin}"></canvas></div>`:''}
+      <div class="source-tag">NAV ${d.navDate}</div>
+    </div>`;
+  }).join(''));
+  setTimeout(()=>{
+    portfolio.forEach(f=>{
+      const s=cache[f.isin]?.series||[];if(s.length<2)return;
+      const el=document.getElementById('m_'+f.isin);if(!el)return;
+      const up=s[s.length-1].c>=s[0].c;
+      new Chart(el,{type:'line',data:{
+        labels:s.map(x=>new Date(x.t).toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'})),
+        datasets:[{data:s.map(x=>x.c),borderColor:up?'#27A06A':'#D03232',borderWidth:1.5,pointRadius:0,fill:false,tension:.3}]
+      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}}}});
+    });
+  },100);
+}
+
+function rEvolucion(){
+  if(!portfolio.length)return;
+  const COLS=['#378ADD','#27A06A','#E89020','#9B59B6','#E74C3C','#1ABC9C'];
+  const all=portfolio.map((f,i)=>({f,s:cache[f.isin]?.series||[],c:COLS[i%COLS.length]})).filter(x=>x.s.length>1);
+  if(!all.length)return;
+  const ctx=document.getElementById('chartEvol');
+  if(evoChart)evoChart.destroy();
+  evoChart=new Chart(ctx,{type:'line',data:{
+    labels:all[0].s.map(x=>new Date(x.t).toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'})),
+    datasets:all.map(a=>({label:a.f.name,data:a.s.map(x=>a.s[0].c>0?((x.c/a.s[0].c)-1)*100:0),borderColor:a.c,borderWidth:2,pointRadius:0,fill:false,tension:.3}))
+  },options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>`${v.dataset.label}: ${fmtP(v.raw)}`}}},
+    scales:{x:{ticks:{maxTicksLimit:6,color:'#888',font:{size:11}},grid:{color:'#f0f0f0'}},
+            y:{ticks:{callback:v=>fmtP(v),color:'#888',font:{size:11}},grid:{color:'#f0f0f0'}}}}});
+  let tv=0;portfolio.forEach(f=>{tv+=gp(f).val;});
+  ss('distrib-content',portfolio.map((f,i)=>{
+    const p=tv>0?(gp(f).val/tv)*100:0;
+    return`<div class="distrib-row">
+      <div class="distrib-dot" style="background:${COLS[i%COLS.length]}"></div>
+      <div style="flex:1"><div style="font-size:14px">${f.name}</div>
+        <div class="distrib-bar-bg"><div class="distrib-bar-fill" style="width:${p.toFixed(1)}%;background:${COLS[i%COLS.length]}"></div></div>
+      </div>
+      <div style="font-size:14px;font-weight:500;color:#0C447C">${fmt(p,1)}%</div>
+    </div>`;
+  }).join(''));
+}
+
+function rManage(){
+  if(!portfolio.length){ss('manage-list','<p style="font-size:13px;color:#bbb">Sin fondos añadidos</p>');return;}
+  ss('manage-list',portfolio.map((f,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5">
+      <div><div style="font-size:14px;font-weight:500">${f.name}</div>
+        <div style="font-size:11px;color:#aaa">${f.isin} · ${fmt(f.units,3)} partic.</div>
+      </div>
+      <button class="btn-danger" onclick="delFund(${i})">Eliminar</button>
+    </div>`).join(''));
+}
+
+function delFund(i){if(!confirm(`¿Eliminar "${portfolio[i].name}"?`))return;delete cache[portfolio[i].isin];portfolio.splice(i,1);save();renderAll();}
+
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const idx=['resumen','posiciones','evolucion','anadir','config'].indexOf(name);
+  if(idx>=0)document.querySelectorAll('.nav button')[idx].classList.add('active');
+  if(name==='anadir') document.getElementById('no-api-warning').style.display=API_BASE?'none':'block';
+}
+
+async function setPeriod(d,btn){
+  document.querySelectorAll('.period-tabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');days=d;cache={};await refreshAll();
+}
+
+loadConfig();
+refreshAll();
+setInterval(refreshAll,10*60*1000);
+</script>
+</body>
+</html>

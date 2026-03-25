@@ -1,0 +1,6 @@
+{
+  "name": "cartera-fondos-api",
+  "version": "1.0.0",
+  "description": "API proxy para NAV de fondos de inversión",
+  "private": true
+}

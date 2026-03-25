@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "functions": {
+    "api/fondo.js": {
+      "memory": 256,
+      "maxDuration": 15
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" },
+        { "key": "Cache-Control", "value": "s-maxage=3600" }
+      ]
+    }
+  ]
+}
